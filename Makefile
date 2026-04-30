@@ -13,13 +13,16 @@ OBJCOPY    = avr-objcopy
 SIZE       = avr-size
 AVRDUDE    = avrdude
 
-# ---- Programmer (uncomment ONE) ----
-# Option A: USBasp
-PROGRAMMER = usbasp
-AVRDUDE_PORT =
-# Option B: Arduino as ISP (uncomment these two, comment out Option A)
-# PROGRAMMER = stk500v1
-# AVRDUDE_PORT = -P COM3 -b 19200
+# ---- Programmer ----
+# Direct USB upload via Arduino bootloader.
+# Change COM3 to match your port (check Device Manager → Ports)
+PROGRAMMER    = arduino
+AVRDUDE_PORT  = -P COM3 -b 115200
+
+# ---- Arduino IDE toolchain (avr-gcc + avrdude) ----
+# Adjust this path if your Arduino IDE is installed elsewhere.
+ARDUINO_TOOLS = C:/Program Files (x86)/Arduino/hardware/tools/avr/bin
+export PATH   := $(ARDUINO_TOOLS):$(PATH)
 
 # ---- Directories ----
 SRCDIR     = src

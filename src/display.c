@@ -8,7 +8,7 @@
  * each row.  Register your output function with display_set_output_fn()
  * before calling display_init().
  *
- * Callback parameters (called once per row, every ~1 ms):
+ * Callback parameters (called twice per row, every ~1 ms base tick):
  *   row_select  — active-low byte; bit N = 0 means row N is active
  *   green_cols  — column bits to light green for this row
  *   red_cols    — column bits to light red for this row
@@ -208,8 +208,10 @@ void display_victory_animation(void)
 /* ==========================================================================
  * Timer2 compare-match ISR — display multiplexing
  *
- * Fires every ~1 ms.  Each call shifts out one row's worth of data
- * through the 74HC595 chain, then advances to the next row.
+ * Fires every ~1 ms.  For each row, we output two passes:
+ *   1) red only
+ *   2) green only
+ * then advance to the next row.
  *
  * Shift order (last shifted = first register):
  *   1) red column byte   → lands in SR3
@@ -222,11 +224,15 @@ ISR(TIMER2_COMPA_vect)
     /* Build the row-select byte: active-low, so only the current row is 0 */
     uint8_t row_byte = (uint8_t)~(1 << current_row);
 
-    /* Call user-provided output function with this row's data */
+    /* Call user-provided output function for red pass, then green pass */
     if (output_fn) {
         output_fn(row_byte,
-                  green_buffer[current_row],
+                  0x00,
                   red_buffer[current_row]);
+
+        output_fn(row_byte,
+                  green_buffer[current_row],
+                  0x00);
     }
 
     /* Advance to next row (wraps 0–7) */

@@ -16,10 +16,11 @@
 extern volatile uint8_t green_buffer[8];
 extern volatile uint8_t red_buffer[8];
 
-/* Output callback — called once per row from the Timer2 ISR (~1 kHz).
+/* Output callback — called from the Timer2 ISR (~1 kHz base).
+ * For each row, the ISR calls this callback twice:
+ *   1) red pass   (green_cols = 0, red_cols = row red data)
+ *   2) green pass (green_cols = row green data, red_cols = 0)
  * row_select : active-low byte, only the active row's bit is 0.
- * green_cols : column bits to illuminate in green for this row.
- * red_cols   : column bits to illuminate in red for this row.
  * The callback MUST be ISR-safe (fast, no blocking, no malloc). */
 typedef void (*display_output_fn)(uint8_t row_select,
                                   uint8_t green_cols,

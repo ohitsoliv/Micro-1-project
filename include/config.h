@@ -37,6 +37,20 @@
 #define BTN_ALL_MASK    (BTN_UP_MASK | BTN_DOWN_MASK | BTN_LEFT_MASK | BTN_RIGHT_MASK)
 
 /* ==========================================================================
+ * DISPLAY OUTPUT PINS (74HC595 chain)
+ * ========================================================================== */
+#define SR_DDR          DDRB
+#define SR_PORT         PORTB
+
+#define SR_DATA_BIT     PB0
+#define SR_CLK_BIT      PB1
+#define SR_LATCH_BIT    PB2
+
+#define SR_DATA_MASK    (1 << SR_DATA_BIT)
+#define SR_CLK_MASK     (1 << SR_CLK_BIT)
+#define SR_LATCH_MASK   (1 << SR_LATCH_BIT)
+
+/* ==========================================================================
  * GAME CONSTANTS
  * ========================================================================== */
 #define GRID_SIZE           8       /* 8×8 LED matrix                        */

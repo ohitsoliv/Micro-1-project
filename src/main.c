@@ -27,13 +27,44 @@
 extern void game_transition_to_level2(void);
 extern void game_restart(void);
 
+/* ---------- hardware output for display callback ------------------------ */
+static void shift_out_byte(uint8_t data)
+{
+    for (uint8_t i = 0; i < 8; i++) {
+        if (data & 0x80) {
+            SR_PORT |= SR_DATA_MASK;
+        } else {
+            SR_PORT &= (uint8_t)~SR_DATA_MASK;
+        }
+        data <<= 1;
+
+        SR_PORT |= SR_CLK_MASK;
+        SR_PORT &= (uint8_t)~SR_CLK_MASK;
+    }
+}
+
+static void matrix_output_595(uint8_t row_select, uint8_t green_cols, uint8_t red_cols)
+{
+    shift_out_byte(red_cols);
+    shift_out_byte(green_cols);
+    shift_out_byte(row_select);
+
+    SR_PORT |= SR_LATCH_MASK;
+    SR_PORT &= (uint8_t)~SR_LATCH_MASK;
+}
+
+
 /* ==========================================================================
  * main
  * ========================================================================== */
 int main(void)
 {
     /* ---- 1. Initialise everything (interrupts still disabled) ---- */
-    display_init();         /* shift-register pins, blank the matrix     */
+    SR_DDR  |= SR_DATA_MASK | SR_CLK_MASK | SR_LATCH_MASK;
+    SR_PORT &= (uint8_t)~(SR_DATA_MASK | SR_CLK_MASK | SR_LATCH_MASK);
+
+    display_set_output_fn(matrix_output_595);
+    display_init();         /* display buffers                            */
     input_init();           /* button pull-ups                           */
     timer_init();           /* Timer0/1/2 — CTC modes, interrupts armed  */
     game_init();            /* snake, treat, PRNG seed from ADC          */

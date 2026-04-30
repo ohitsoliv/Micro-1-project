@@ -37,51 +37,21 @@
 #define BTN_ALL_MASK    (BTN_UP_MASK | BTN_DOWN_MASK | BTN_LEFT_MASK | BTN_RIGHT_MASK)
 
 /* ==========================================================================
- * 74HC595 SHIFT REGISTER CHAIN — accent on PORTB
- *
- * Daisy chain order (from ATmega's perspective):
- *   ATmega → SR1 (row select) → SR2 (green cols) → SR3 (red cols)
- *
- * When shifting 24 bits out, send RED first, GREEN second, ROW last
- * so each byte lands in the correct register after latching.
- * ========================================================================== */
-#define SR_DDR          DDRB
-#define SR_PORT         PORTB
-
-#define SR_DATA_BIT     PB0     /* SER  (serial data in) */
-#define SR_CLK_BIT      PB1     /* SRCLK (shift clock)   */
-#define SR_LATCH_BIT    PB2     /* RCLK  (latch / store) */
-
-#define SR_DATA_MASK    (1 << SR_DATA_BIT)
-#define SR_CLK_MASK     (1 << SR_CLK_BIT)
-#define SR_LATCH_MASK   (1 << SR_LATCH_BIT)
-
-/* ==========================================================================
- * LAYER SELECT — choose which physical 8×8 layer is active
- *   LOW  = layer 0 (bottom)
- *   HIGH = layer 1 (top)
- * ========================================================================== */
-#define LAYER_DDR       DDRB
-#define LAYER_PORT      PORTB
-#define LAYER_BIT       PB3
-#define LAYER_MASK      (1 << LAYER_BIT)
-
-/* ==========================================================================
  * GAME CONSTANTS
  * ========================================================================== */
 #define GRID_SIZE           8       /* 8×8 LED matrix                        */
 #define MAX_SNAKE_LENGTH    64      /* worst case: entire grid               */
 #define INITIAL_SNAKE_LEN   3       /* start with 3 segments                 */
 
-#define LAYER1_TREATS       5       /* treats to eat on layer 0 to win       */
-#define LAYER2_TREATS       8       /* treats to eat on layer 1 to win       */
+#define LEVEL1_TREATS       5       /* treats to eat on level 1 to win       */
+#define LEVEL2_TREATS       8       /* treats to eat on level 2 to win       */
 
 /* Game tick periods (Timer1 OCR1A values, prescaler = 256, 16 MHz)
  *   Period = (OCR1A + 1) * 256 / 16 000 000
  *   400 ms → OCR1A = 24999
  *   250 ms → OCR1A = 15624                                                  */
-#define TICK_SLOW           24999U  /* ~400 ms — layer 0                     */
-#define TICK_FAST           15624U  /* ~250 ms — layer 1                     */
+#define TICK_SLOW           24999U  /* ~400 ms — level 1                     */
+#define TICK_FAST           15624U  /* ~250 ms — level 2                     */
 
 /* Debounce: 3 consecutive identical reads at 10 ms intervals               */
 #define DEBOUNCE_COUNT      3

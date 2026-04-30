@@ -1,14 +1,17 @@
 /* ==========================================================================
- * display.c — 8×8 bicolor LED matrix driver via 74HC595 shift registers
+ * display.c — 8×8 bicolor LED matrix driver
  * EE3463 Final Project — 3D Snek :3
  *
- * Three 74HC595s are daisy-chained:
- *   ATmega → SR1 (row select, active-low cathode)
- *          → SR2 (green columns)
- *          → SR3 (red columns)
+ * The display driver is hardware-agnostic.  It maintains two 8-byte frame
+ * buffers (green_buffer, red_buffer) and fires a user-provided callback
+ * from the Timer2 ISR (~1 kHz) with the row-select and column data for
+ * each row.  Register your output function with display_set_output_fn()
+ * before calling display_init().
  *
- * Timer2 ISR fires every ~1 ms and outputs one row.  A full frame
- * (8 rows) refreshes in 8 ms → ~125 Hz, well above flicker threshold.
+ * Callback parameters (called once per row, every ~1 ms):
+ *   row_select  — active-low byte; bit N = 0 means row N is active
+ *   green_cols  — column bits to light green for this row
+ *   red_cols    — column bits to light red for this row
  *
  * Snake body → green,  Treat → red,  Overlap → both (yellow/amber).
  * ========================================================================== */
@@ -28,34 +31,12 @@ volatile uint8_t red_buffer[8];
 /* ---------- current mux row (internal to ISR) --------------------------- */
 static volatile uint8_t current_row = 0;
 
-/* ==========================================================================
- * shift_out_byte — bit-bang 8 bits MSB-first into the 74HC595 chain
- * ========================================================================== */
-static void shift_out_byte(uint8_t data)
-{
-    for (uint8_t i = 0; i < 8; i++) {
-        /* Set data line */
-        if (data & 0x80) {
-            SR_PORT |= SR_DATA_MASK;
-        } else {
-            SR_PORT &= ~SR_DATA_MASK;
-        }
-        data <<= 1;
+/* ---------- user-provided hardware output callback ---------------------- */
+static display_output_fn output_fn = 0;
 
-        /* Pulse clock: LOW → HIGH (595 shifts on rising edge) */
-        SR_PORT |= SR_CLK_MASK;
-        SR_PORT &= ~SR_CLK_MASK;
-    }
-}
-
-/* ==========================================================================
- * latch — pulse the RCLK line to transfer shift-register contents to
- *         the output latches.
- * ========================================================================== */
-static void latch(void)
+void display_set_output_fn(display_output_fn fn)
 {
-    SR_PORT |= SR_LATCH_MASK;
-    SR_PORT &= ~SR_LATCH_MASK;
+    output_fn = fn;
 }
 
 /* ==========================================================================
@@ -63,37 +44,9 @@ static void latch(void)
  * ========================================================================== */
 void display_init(void)
 {
-    /* Shift register pins as outputs */
-    SR_DDR |= SR_DATA_MASK | SR_CLK_MASK | SR_LATCH_MASK;
-
-    /* Layer select pin as output, default LOW (layer 0) */
-    LAYER_DDR |= LAYER_MASK;
-    LAYER_PORT &= ~LAYER_MASK;
-
-    /* Start with all lines low */
-    SR_PORT &= ~(SR_DATA_MASK | SR_CLK_MASK | SR_LATCH_MASK);
-
-    /* Clear frame buffers */
     memset((void *)green_buffer, 0, 8);
     memset((void *)red_buffer,   0, 8);
-
-    /* Blank the matrix: all rows deselected (HIGH), columns off (LOW) */
-    shift_out_byte(0x00);   /* red  columns — all off  */
-    shift_out_byte(0x00);   /* green columns — all off */
-    shift_out_byte(0xFF);   /* rows — all HIGH = none selected */
-    latch();
-}
-
-/* ==========================================================================
- * display_set_layer — drive the layer-select pin
- * ========================================================================== */
-void display_set_layer(uint8_t layer)
-{
-    if (layer) {
-        LAYER_PORT |= LAYER_MASK;      /* HIGH = layer 1 (top) */
-    } else {
-        LAYER_PORT &= ~LAYER_MASK;     /* LOW  = layer 0 (bottom) */
-    }
+    current_row = 0;
 }
 
 /* ==========================================================================
@@ -269,11 +222,12 @@ ISR(TIMER2_COMPA_vect)
     /* Build the row-select byte: active-low, so only the current row is 0 */
     uint8_t row_byte = (uint8_t)~(1 << current_row);
 
-    /* Shift out in chain order */
-    shift_out_byte(red_buffer[current_row]);
-    shift_out_byte(green_buffer[current_row]);
-    shift_out_byte(row_byte);
-    latch();
+    /* Call user-provided output function with this row's data */
+    if (output_fn) {
+        output_fn(row_byte,
+                  green_buffer[current_row],
+                  red_buffer[current_row]);
+    }
 
     /* Advance to next row (wraps 0–7) */
     current_row = (current_row + 1) & 0x07;

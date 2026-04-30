@@ -5,8 +5,8 @@
  * The snake body is stored in a circular buffer of Point structs.
  * head and tail indices chase each other around the buffer.
  *
- * Layer 0 (bottom): eat 5 treats to win, tick = 400 ms
- * Layer 1 (top):    eat 8 treats to win, tick = 250 ms
+ * Level 0: eat 5 treats to win, tick = 400 ms
+ * Level 1: eat 8 treats to win, tick = 250 ms
  * Wall behaviour:   wrap-around (toroidal grid)
  * Self-collision:   game over
  * ========================================================================== */
@@ -33,10 +33,10 @@ static Point treat;
 /* Current movement direction (applied each tick). */
 static Direction dir;
 
-/* Which layer we're playing (0 or 1). */
-static uint8_t current_layer;
+/* Which level we're playing (0 or 1). */
+static uint8_t current_level;
 
-/* How many treats eaten on the current layer. */
+/* How many treats eaten on the current level. */
 static uint8_t treats_eaten;
 
 /* High-level game state. */
@@ -45,7 +45,7 @@ static GameState state;
 /* ---------- forward declarations ---------------------------------------- */
 static void place_treat(void);
 static uint8_t is_on_snake(uint8_t x, uint8_t y);
-static void    start_layer(uint8_t layer);
+static void    start_level(uint8_t level);
 static uint16_t read_adc_for_seed(void);
 
 /* ==========================================================================
@@ -74,11 +74,11 @@ static uint16_t read_adc_for_seed(void)
 }
 
 /* ==========================================================================
- * start_layer — reset the snake and treat for a given layer
+ * start_level — reset the snake and treat for a given level
  * ========================================================================== */
-static void start_layer(uint8_t layer)
+static void start_level(uint8_t level)
 {
-    current_layer = layer;
+    current_level = level;
     treats_eaten  = 0;
 
     /* Initial snake: 3 segments, centre-left, heading RIGHT.
@@ -95,11 +95,8 @@ static void start_layer(uint8_t layer)
     dir = DIR_RIGHT;
     input_set_current_direction(DIR_RIGHT);
 
-    /* Set game tick speed for this layer. */
-    timer_set_tick_period(layer == 0 ? TICK_SLOW : TICK_FAST);
-
-    /* Set the physical layer select pin. */
-    display_set_layer(layer);
+    /* Set game tick speed for this level. */
+    timer_set_tick_period(level == 0 ? TICK_SLOW : TICK_FAST);
 
     /* Place the first treat. */
     place_treat();
@@ -115,7 +112,7 @@ void game_init(void)
     /* Seed the PRNG from a noisy ADC reading. */
     srand(read_adc_for_seed());
 
-    start_layer(0);
+    start_level(0);
 }
 
 /* ==========================================================================
@@ -216,10 +213,10 @@ void game_update(void)
         snake_length++;
         treats_eaten++;
 
-        /* Check win condition for this layer. */
-        uint8_t target = (current_layer == 0) ? LAYER1_TREATS : LAYER2_TREATS;
+        /* Check win condition for this level. */
+        uint8_t target = (current_level == 0) ? LEVEL1_TREATS : LEVEL2_TREATS;
         if (treats_eaten >= target) {
-            if (current_layer == 0) {
+            if (current_level == 0) {
                 state = STATE_WIN_SEQUENCE;
             } else {
                 state = STATE_VICTORY;
@@ -242,9 +239,9 @@ GameState game_get_state(void)
     return state;
 }
 
-uint8_t game_get_layer(void)
+uint8_t game_get_level(void)
 {
-    return current_layer;
+    return current_level;
 }
 
 uint8_t game_get_treats_eaten(void)
@@ -279,13 +276,13 @@ Point game_get_treat(void)
  * in main.c.
  * ========================================================================== */
 
-void game_transition_to_layer2(void)
+void game_transition_to_level2(void)
 {
-    start_layer(1);
+    start_level(1);
 }
 
 void game_restart(void)
 {
     srand(read_adc_for_seed());   /* re-seed for variety */
-    start_layer(0);
+    start_level(0);
 }

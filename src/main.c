@@ -24,7 +24,7 @@
 #include "display.h"
 
 /* ---------- functions defined in game.c but not in game.h --------------- */
-extern void game_transition_to_layer2(void);
+extern void game_transition_to_level2(void);
 extern void game_restart(void);
 
 /* ==========================================================================
@@ -61,17 +61,17 @@ int main(void)
                 break;
 
             case STATE_WIN_SEQUENCE:
-                /* Player cleared layer 0 — flash yellow, then move to layer 1 */
+                /* Player cleared level 1 — flash yellow, then move to level 2 */
                 display_win_animation();
 
                 /* Brief blank pause during transition */
                 _delay_ms(500);
 
-                game_transition_to_layer2();
+                game_transition_to_level2();
                 display_render();
                 break;
 
-            case STATE_LAYER_TRANSITION:
+            case STATE_LEVEL_TRANSITION:
                 /* (reserved — currently handled directly in WIN_SEQUENCE) */
                 break;
 
@@ -85,7 +85,7 @@ int main(void)
                 break;
 
             case STATE_VICTORY:
-                /* Both layers cleared — fancy animation, then restart */
+                /* Both levels cleared — fancy animation, then restart */
                 display_victory_animation();
                 _delay_ms(1000);
 

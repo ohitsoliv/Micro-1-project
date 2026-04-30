@@ -25,10 +25,10 @@ typedef enum {
 /* ---------- Overall game state machine ---------- */
 typedef enum {
     STATE_PLAYING,          /* normal gameplay                          */
-    STATE_WIN_SEQUENCE,     /* layer cleared — flash all LEDs           */
-    STATE_LAYER_TRANSITION, /* brief pause before starting next layer   */
+    STATE_WIN_SEQUENCE,     /* level cleared — flash all LEDs           */
+    STATE_LEVEL_TRANSITION, /* brief pause before starting next level   */
     STATE_GAME_OVER,        /* self-collision — red flash               */
-    STATE_VICTORY           /* both layers cleared — victory animation  */
+    STATE_VICTORY           /* both levels cleared — victory animation  */
 } GameState;
 
 /* ---------- Public functions ---------- */
@@ -43,10 +43,10 @@ void game_update(void);
 /* Return the current high-level state so main.c can decide what to show. */
 GameState game_get_state(void);
 
-/* Return the current layer number (0 or 1). */
-uint8_t game_get_layer(void);
+/* Return the current level number (0 or 1). */
+uint8_t game_get_level(void);
 
-/* Return the number of treats eaten on the current layer. */
+/* Return the number of treats eaten on the current level. */
 uint8_t game_get_treats_eaten(void);
 
 /* ---- Direct access for the display renderer ---- */

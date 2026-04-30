@@ -16,7 +16,20 @@
 extern volatile uint8_t green_buffer[8];
 extern volatile uint8_t red_buffer[8];
 
-/* Initialise shift-register pins, layer select, and clear the buffers.
+/* Output callback — called once per row from the Timer2 ISR (~1 kHz).
+ * row_select : active-low byte, only the active row's bit is 0.
+ * green_cols : column bits to illuminate in green for this row.
+ * red_cols   : column bits to illuminate in red for this row.
+ * The callback MUST be ISR-safe (fast, no blocking, no malloc). */
+typedef void (*display_output_fn)(uint8_t row_select,
+                                  uint8_t green_cols,
+                                  uint8_t red_cols);
+
+/* Register the hardware output callback before calling display_init().
+ * Without a registered callback the display will be blank. */
+void display_set_output_fn(display_output_fn fn);
+
+/* Initialise the display driver and clear the frame buffers.
  * Call once at startup.                                                    */
 void display_init(void);
 
@@ -33,10 +46,7 @@ void display_win_animation(void);
 void display_game_over_animation(void);
 
 /* Blocking animation: cascading spiral in both colours.
- * Used when the player beats both layers.                                  */
+ * Used when the player beats both levels.                                  */
 void display_victory_animation(void);
-
-/* Set the physical layer select pin (0 = bottom, 1 = top). */
-void display_set_layer(uint8_t layer);
 
 #endif /* DISPLAY_H */

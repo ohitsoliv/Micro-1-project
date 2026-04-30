@@ -18,7 +18,7 @@ Wall behavior is wrap-around (the snake exits one side and reappears on the
 opposite). Self-collision ends the game.
 
 ## Hardware
-
+//add here
 | Component               | Qty | Notes                                |
 |--------------------------|-----|--------------------------------------|
 | ATmega328P (UTSA board)  | 1   | Running at 16 MHz                    |
